@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar sesion - TechSolutions{% endblock %}
+
+{% block body %}
+<div class="auth-layout">
+    <!-- Panel de marca -->
+    <aside class="auth-brand">
+        <div class="auth-brand__top">
+            <span class="auth-logo">
+                <i class="bi bi-hexagon-fill"></i>
+                TechSolutions
+            </span>
+        </div>
+
+        <div class="auth-brand__body">
+            <h2>Gestiona tus servicios profesionales en un solo lugar.</h2>
+            <p>Seguimiento de solicitudes, consultores especializados y atencion personalizada, todo desde un panel.</p>
+
+            <ul class="auth-features">
+                <li><i class="bi bi-check2-square"></i> Seguimiento de solicitudes en tiempo real</li>
+                <li><i class="bi bi-people"></i> Consultores especializados en 8 areas</li>
+                <li><i class="bi bi-bell"></i> Notificaciones automaticas por email y WhatsApp</li>
+            </ul>
+        </div>
+
+        <div class="auth-brand__foot">
+            &copy; 2026 TechSolutions. Todos los derechos reservados.
+        </div>
+    </aside>
+
+    <!-- Panel del formulario -->
+    <main class="auth-form-panel">
+        <div class="auth-form">
+            <div class="auth-logo auth-logo--mobile">
+                <i class="bi bi-hexagon-fill"></i>
+                TechSolutions
+            </div>
+
+            <h1>Bienvenido de nuevo</h1>
+            <p class="auth-subtitle">Ingresa tus credenciales para acceder al panel.</p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" novalidate>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input
+                            type="email"
+                            class="form-control"
+                            id="email"
+                            name="email"
+                            placeholder="usuario@techsolutions.com"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contrasena</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            placeholder="Tu contrasena"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button
+                            class="btn btn-outline-secondary toggle-password"
+                            type="button"
+                            tabindex="-1"
+                            aria-label="Mostrar contrasena"
+                        >
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">Recordarme</label>
+                    </div>
+                    <a href="#" class="auth-link">Olvidaste tu contrasena?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 btn-lg">
+                    Ingresar
+                </button>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.querySelector(".toggle-password").addEventListener("click", function () {
+        const input = document.getElementById("password");
+        const icon = this.querySelector("i");
+        const showing = input.type === "text";
+        input.type = showing ? "password" : "text";
+        icon.classList.toggle("bi-eye", showing);
+        icon.classList.toggle("bi-eye-slash", !showing);
+    });
+</script>
+{% endblock %}
