@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Planes disponibles - TechSolutions{% endblock %}
+
+{% block body %}
+{% include "partials/navbar.html" %}
+
+<div class="container-fluid dashboard-content">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('main.home') }}" class="detail-back">
+        <i class="bi bi-arrow-left"></i> Volver al panel
+    </a>
+
+    <div class="dashboard-header">
+        <h1>Planes disponibles</h1>
+        <p class="dashboard-subtitle">
+            Tu plan actual es <strong>{{ active_plan.name }}</strong>. Estos son los planes superiores a los que podes cambiar.
+        </p>
+    </div>
+
+    {% if pending_upgrade %}
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="bi bi-hourglass-split me-2"></i>
+            <span>
+                Ya tenes una solicitud de upgrade en curso (#{{ pending_upgrade.id }}). Espera a que se resuelva para enviar otra.
+                <a href="{{ url_for('main.request_detail', request_id=pending_upgrade.id) }}">Ver solicitud</a>.
+            </span>
+        </div>
+    {% endif %}
+
+    {% if not upgrades %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-award" style="font-size: 2.5rem;"></i>
+            <p class="mt-2">Ya tenes el plan mas alto disponible. No hay upgrades para mostrar.</p>
+        </div>
+    {% else %}
+        <div class="row g-4">
+            {% for plan in upgrades %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="card catalog-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="catalog-card__head">
+                                <h3 class="catalog-card__name">{{ plan.name }}</h3>
+                                <span class="catalog-card__price">{{ plan.price }}</span>
+                            </div>
+                            <p class="catalog-card__tagline">{{ plan.tagline }}</p>
+
+                            <ul class="plan-services">
+                                {% for service in plan.services %}
+                                    <li>
+                                        <i class="bi bi-check-lg"></i>
+                                        <div>
+                                            <strong>{{ service.name }}</strong>
+                                            <span class="plan-services__desc">{{ service.description }}</span>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                            <button
+                                class="btn btn-primary w-100 mt-auto"
+                                type="button"
+                                data-bs-toggle="modal"
+                                data-bs-target="#upgradeModal-{{ plan.id }}"
+                                {{ 'disabled' if pending_upgrade }}
+                            >
+                                Solicitar cambio a este plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Modales de solicitud de upgrade -->
+        {% for plan in upgrades %}
+            <div class="modal fade" id="upgradeModal-{{ plan.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Solicitar cambio a {{ plan.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <form method="post" action="{{ url_for('main.request_upgrade') }}">
+                            <input type="hidden" name="target_plan_id" value="{{ plan.id }}">
+                            <div class="modal-body">
+                                <p class="text-muted">
+                                    Estas por solicitar el cambio de <strong>{{ active_plan.name }}</strong>
+                                    a <strong>{{ plan.name }}</strong>. La solicitud quedara pendiente de aprobacion del administrador.
+                                </p>
+                                <div class="mb-2">
+                                    <label for="reason-{{ plan.id }}" class="form-label">Motivo (opcional)</label>
+                                    <textarea
+                                        class="form-control"
+                                        id="reason-{{ plan.id }}"
+                                        name="reason"
+                                        rows="3"
+                                        placeholder="Contanos por que queres cambiar de plan..."
+                                    ></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Confirmar solicitud</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -11,7 +11,8 @@
     "modified": "pencil-square",
     "comment": "chat-left-text",
     "status_change": "arrow-repeat",
-    "resolved": "check-circle-fill"
+    "resolved": "check-circle-fill",
+    "rejected": "x-circle-fill"
 } %}
 
 {# Progreso de la solicitud: pasos completados segun el estado #}
@@ -52,47 +53,99 @@
     <div class="row g-4">
         <!-- Estado de la solicitud -->
         <div class="col-lg-4">
-            {% if request_item.status == "completada" %}
-                <div class="detail-status detail-status--done">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <div>
-                        <span class="detail-status__label">Realizado</span>
-                        <span class="detail-status__hint">Esta solicitud fue resuelta.</span>
+            {% if request_item.kind == "upgrade" %}
+                {% if request_item.status == "aprobada" %}
+                    <div class="detail-status detail-status--done">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div>
+                            <span class="detail-status__label">Aprobada</span>
+                            <span class="detail-status__hint">El cambio de plan fue aprobado y tu plan ya esta actualizado.</span>
+                        </div>
                     </div>
-                </div>
-            {% elif request_item.status == "en_progreso" %}
-                <div class="detail-status detail-status--progress">
-                    <i class="bi bi-arrow-repeat"></i>
-                    <div>
-                        <span class="detail-status__label">En progreso</span>
-                        <span class="detail-status__hint">La consultora esta trabajando en esto.</span>
+                {% elif request_item.status == "rechazada" %}
+                    <div class="detail-status detail-status--rejected">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <div>
+                            <span class="detail-status__label">Rechazada</span>
+                            <span class="detail-status__hint">La solicitud fue rechazada. Tu plan no cambia.</span>
+                        </div>
                     </div>
-                </div>
-            {% else %}
-                <div class="detail-status detail-status--pending">
-                    <i class="bi bi-hourglass-split"></i>
-                    <div>
-                        <span class="detail-status__label">Pendiente</span>
-                        <span class="detail-status__hint">A la espera de asignacion.</span>
+                {% else %}
+                    <div class="detail-status detail-status--pending">
+                        <i class="bi bi-hourglass-split"></i>
+                        <div>
+                            <span class="detail-status__label">Pendiente de aprobacion</span>
+                            <span class="detail-status__hint">Esperando la decision del administrador.</span>
+                        </div>
                     </div>
-                </div>
-            {% endif %}
+                {% endif %}
 
-            <ol class="detail-stepper">
-                {% for step in steps %}
-                    {% if step.n <= completed %}
-                        {% set state = "is-done" %}
-                    {% elif step.n == completed + 1 and request_item.status != "completada" %}
-                        {% set state = "is-active" %}
-                    {% else %}
-                        {% set state = "is-pending" %}
-                    {% endif %}
-                    <li class="detail-step {{ state }}">
-                        <span class="detail-step__circle"><i class="bi bi-{{ step.icon }}"></i></span>
-                        <span class="detail-step__label">{{ step.label }}</span>
-                    </li>
-                {% endfor %}
-            </ol>
+                <div class="upgrade-flow">
+                    <div class="upgrade-flow__plan">
+                        <span class="upgrade-flow__label">Plan actual</span>
+                        <strong>{{ request_item.from_plan }}</strong>
+                    </div>
+                    <i class="bi bi-arrow-right upgrade-flow__arrow"></i>
+                    <div class="upgrade-flow__plan upgrade-flow__plan--target">
+                        <span class="upgrade-flow__label">Plan solicitado</span>
+                        <strong>{{ request_item.to_plan }}</strong>
+                    </div>
+                </div>
+
+                {% if request_item.status == "pendiente" %}
+                    <div class="demo-actions">
+                        <p class="demo-actions__note">
+                            <i class="bi bi-info-circle"></i> Simulacion de la decision del administrador (solo demo).
+                        </p>
+                        <form method="post" action="{{ url_for('main.resolve_upgrade_view', request_id=request_item.id) }}" class="d-flex gap-2">
+                            <button name="decision" value="approve" class="btn btn-success btn-sm flex-fill">Simular aprobacion</button>
+                            <button name="decision" value="reject" class="btn btn-outline-danger btn-sm flex-fill">Simular rechazo</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% else %}
+                {% if request_item.status == "completada" %}
+                    <div class="detail-status detail-status--done">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div>
+                            <span class="detail-status__label">Realizado</span>
+                            <span class="detail-status__hint">Esta solicitud fue resuelta.</span>
+                        </div>
+                    </div>
+                {% elif request_item.status == "en_progreso" %}
+                    <div class="detail-status detail-status--progress">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <div>
+                            <span class="detail-status__label">En progreso</span>
+                            <span class="detail-status__hint">La consultora esta trabajando en esto.</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="detail-status detail-status--pending">
+                        <i class="bi bi-hourglass-split"></i>
+                        <div>
+                            <span class="detail-status__label">Pendiente</span>
+                            <span class="detail-status__hint">A la espera de asignacion.</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <ol class="detail-stepper">
+                    {% for step in steps %}
+                        {% if step.n <= completed %}
+                            {% set state = "is-done" %}
+                        {% elif step.n == completed + 1 and request_item.status != "completada" %}
+                            {% set state = "is-active" %}
+                        {% else %}
+                            {% set state = "is-pending" %}
+                        {% endif %}
+                        <li class="detail-step {{ state }}">
+                            <span class="detail-step__circle"><i class="bi bi-{{ step.icon }}"></i></span>
+                            <span class="detail-step__label">{{ step.label }}</span>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
         </div>
 
         <!-- Timeline de eventos -->

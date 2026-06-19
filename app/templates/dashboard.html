@@ -56,6 +56,9 @@
                                         data-href="{{ url_for('main.request_detail', request_id=req.id) }}">
                                         <td><strong>{{ req.id }}</strong></td>
                                         <td>
+                                            {% if req.kind == "upgrade" %}
+                                                <span class="badge upgrade-tag me-1"><i class="bi bi-arrow-up-short"></i> Upgrade</span>
+                                            {% endif %}
                                             {{ req.subject }}
                                             {% if req.has_update %}
                                                 <span class="badge update-badge ms-1">Nuevo</span>
@@ -69,6 +72,10 @@
                                                 <span class="badge status-badge--progress">En progreso</span>
                                             {% elif req.status == "completada" %}
                                                 <span class="badge status-badge--done">Completada</span>
+                                            {% elif req.status == "aprobada" %}
+                                                <span class="badge status-badge--approved">Aprobada</span>
+                                            {% elif req.status == "rechazada" %}
+                                                <span class="badge status-badge--rejected">Rechazada</span>
                                             {% endif %}
                                         </td>
                                         <td>
@@ -139,6 +146,16 @@
                     </div>
                 </div>
             </div>
+
+            {% if pending_upgrade %}
+                <a href="{{ url_for('main.request_detail', request_id=pending_upgrade.id) }}" class="plan-upgrade-note">
+                    <i class="bi bi-hourglass-split"></i> Solicitud de cambio de plan en curso
+                </a>
+            {% elif can_upgrade %}
+                <a href="{{ url_for('main.plans') }}" class="btn btn-primary btn-sm w-100 plan-upgrade-btn">
+                    <i class="bi bi-arrow-up-circle me-1"></i> Mejorar plan
+                </a>
+            {% endif %}
 
             {% if plan_history %}
                 <a

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 REQUEST_AREAS = [
     "Soporte IT",
@@ -12,25 +12,78 @@ REQUEST_AREAS = [
 ]
 
 
+# ===== Catalogo de planes (3 niveles) =====
+PLANS_CATALOG = [
+    {
+        "id": "basico",
+        "level": 1,
+        "name": "Plan Basico",
+        "tagline": "Para arrancar con lo esencial",
+        "price": "USD 199/mes",
+        "services": [
+            {"name": "Soporte IT remoto", "description": "Asistencia tecnica L-V 9 a 18hs"},
+            {"name": "Monitoreo basico", "description": "Alertas de caida de servicios"},
+            {"name": "Backup semanal", "description": "Respaldo de datos criticos"},
+        ],
+    },
+    {
+        "id": "profesional",
+        "level": 2,
+        "name": "Plan Profesional",
+        "tagline": "Para equipos en crecimiento",
+        "price": "USD 499/mes",
+        "services": [
+            {"name": "Soporte IT 24/7", "description": "Asistencia tecnica sin restriccion horaria"},
+            {"name": "Consultoria Cloud", "description": "Migracion y optimizacion AWS/Azure"},
+            {"name": "Seguridad avanzada", "description": "Auditorias, pentesting y monitoreo"},
+            {"name": "Backup diario", "description": "Respaldo automatico con retencion 30 dias"},
+        ],
+    },
+    {
+        "id": "premium",
+        "level": 3,
+        "name": "Plan Premium",
+        "tagline": "Maximo nivel de servicio y respaldo",
+        "price": "USD 999/mes",
+        "services": [
+            {"name": "Soporte IT 24/7 prioritario", "description": "Tiempos de respuesta garantizados"},
+            {"name": "Consultor dedicado", "description": "Account manager asignado a tu cuenta"},
+            {"name": "SLA 99.9%", "description": "Nivel de servicio garantizado por contrato"},
+            {"name": "Seguridad gestionada", "description": "Auditorias trimestrales y respuesta a incidentes"},
+            {"name": "DRP y backup en tiempo real", "description": "Plan de recuperacion ante desastres"},
+        ],
+    },
+]
+
+
+def _catalog_by_level(level):
+    return next((p for p in PLANS_CATALOG if p["level"] == level), None)
+
+
+def _catalog_by_id(plan_id):
+    return next((p for p in PLANS_CATALOG if p["id"] == plan_id), None)
+
+
+def _build_active_plan(level, start_date, end_date):
+    plan = dict(_catalog_by_level(level))
+    plan["status"] = "active"
+    plan["start_date"] = start_date
+    plan["end_date"] = end_date
+    return plan
+
+
+# Plan vigente del cliente (uno solo). Se actualiza al aprobarse un upgrade.
+_active_plan = _build_active_plan(2, "01/03/2026", "28/02/2027")
+
+
 def get_active_plan():
-    # El cliente solo puede tener un plan vigente a la vez.
-    return {
-        "status_code": 200,
-        "path": "/api/plans/active",
-        "data": {
-            "id": 2,
-            "name": "Plan Profesional",
-            "status": "active",
-            "services": [
-                {"name": "Soporte IT 24/7", "description": "Asistencia tecnica sin restriccion horaria"},
-                {"name": "Consultoria Cloud", "description": "Migracion y optimizacion AWS/Azure"},
-                {"name": "Seguridad avanzada", "description": "Auditorias, pentesting y monitoreo"},
-                {"name": "Backup diario", "description": "Respaldo automatico con retencion 30 dias"},
-            ],
-            "start_date": "01/03/2026",
-            "end_date": "28/02/2027",
-        },
-    }
+    return {"status_code": 200, "path": "/api/plans/active", "data": _active_plan}
+
+
+def get_available_upgrades():
+    # Solo los planes de nivel superior al plan activo.
+    upgrades = [dict(p) for p in PLANS_CATALOG if p["level"] > _active_plan["level"]]
+    return {"status_code": 200, "path": "/api/plans/upgrades", "data": upgrades}
 
 
 def get_plan_history():
@@ -41,7 +94,7 @@ def get_plan_history():
         "data": [
             {
                 "id": 1,
-                "name": "Plan Starter",
+                "name": "Plan Basico",
                 "status": "expired",
                 "start_date": "15/01/2025",
                 "end_date": "28/02/2026",
@@ -85,10 +138,12 @@ def get_messages():
 
 # ===== Solicitudes =====
 # Almacen in-memory: cada solicitud persiste su timeline de eventos (NotiSys).
-# Tipos de evento: created | modified | comment | status_change | resolved
+# kind: consulta | upgrade
+# Tipos de evento: created | modified | comment | status_change | resolved | rejected
 _requests = [
     {
         "id": 1042,
+        "kind": "consulta",
         "subject": "Migracion base de datos a AWS",
         "area": "Cloud",
         "description": "Necesitamos migrar la base de datos productiva a AWS RDS minimizando el downtime.",
@@ -138,6 +193,7 @@ _requests = [
     },
     {
         "id": 1038,
+        "kind": "consulta",
         "subject": "Configuracion VPN corporativa",
         "area": "Redes",
         "description": "Solicitamos configurar acceso VPN para el equipo remoto.",
@@ -166,6 +222,7 @@ _requests = [
     },
     {
         "id": 1035,
+        "kind": "consulta",
         "subject": "Auditoria de seguridad web",
         "area": "Seguridad",
         "description": "Auditoria de seguridad sobre el portal de clientes.",
@@ -216,6 +273,10 @@ _requests = [
 ]
 
 
+def _next_request_id():
+    return max((r["id"] for r in _requests), default=1042) + 1
+
+
 def get_all_requests():
     return {
         "status_code": 200,
@@ -245,9 +306,11 @@ def get_notifications():
     for req in _requests:
         if req["has_update"]:
             last_event = req["timeline"][-1]
+            etype = last_event["type"]
+            ntype = "success" if etype == "resolved" else "warning" if etype == "rejected" else "info"
             data.append({
                 "id": f"req-{req['id']}",
-                "type": "info",
+                "type": ntype,
                 "message": f"Solicitud #{req['id']}: {last_event['title'].lower()}",
                 "date": req["last_update"],
                 "read": False,
@@ -268,10 +331,11 @@ def get_notifications():
 
 
 def create_request(subject, description, area):
-    new_id = 1043 + len(_requests)
+    new_id = _next_request_id()
     now = datetime.now().strftime("%H:%M")
     new_request = {
         "id": new_id,
+        "kind": "consulta",
         "subject": subject,
         "area": area,
         "description": description,
@@ -297,4 +361,135 @@ def create_request(subject, description, area):
         "path": "/api/requests",
         "data": new_request,
         "message": f"Solicitud #{new_id} creada exitosamente",
+    }
+
+
+# ===== Solicitudes de upgrade de plan =====
+def get_pending_upgrade():
+    return next(
+        (r for r in _requests if r.get("kind") == "upgrade" and r["status"] == "pendiente"),
+        None,
+    )
+
+
+def has_pending_upgrade():
+    return get_pending_upgrade() is not None
+
+
+def create_upgrade_request(target_plan_id, reason):
+    target = _catalog_by_id(target_plan_id)
+    if target is None or target["level"] <= _active_plan["level"]:
+        return {
+            "status_code": 400,
+            "path": "/api/plans/upgrade",
+            "data": None,
+            "message": "El plan seleccionado no es un upgrade valido.",
+        }
+
+    # Bloqueo de solicitudes duplicadas.
+    if has_pending_upgrade():
+        return {
+            "status_code": 409,
+            "path": "/api/plans/upgrade",
+            "data": None,
+            "message": "Ya tenes una solicitud de upgrade en curso. Espera a que se resuelva.",
+        }
+
+    new_id = _next_request_id()
+    now = datetime.now()
+    stamp = now.strftime("%d/%m/%Y %H:%M")
+    from_name = _active_plan["name"]
+    to_name = target["name"]
+
+    upgrade = {
+        "id": new_id,
+        "kind": "upgrade",
+        "subject": f"Cambio de plan: {from_name} → {to_name}",
+        "area": "Planes",
+        "description": reason or "Sin motivo especificado.",
+        "from_plan": from_name,
+        "to_plan": to_name,
+        "to_level": target["level"],
+        "status": "pendiente",
+        "priority": "media",
+        "created": now.strftime("%d/%m/%Y"),
+        "assigned_to": "Administracion",
+        "has_update": False,
+        "last_update": stamp,
+        "timeline": [
+            {
+                "type": "created",
+                "title": "Solicitud de upgrade enviada",
+                "description": f"Solicitaste el cambio de {from_name} a {to_name}. Pendiente de aprobacion del administrador.",
+                "author": "Vos",
+                "datetime": stamp,
+            },
+        ],
+    }
+    _requests.insert(0, upgrade)
+    return {
+        "status_code": 201,
+        "path": "/api/plans/upgrade",
+        "data": upgrade,
+        "message": f"Solicitud de upgrade #{new_id} enviada. Queda pendiente de aprobacion.",
+    }
+
+
+def resolve_upgrade(request_id, approved):
+    """Simula la decision del administrador sobre una solicitud de upgrade."""
+    global _active_plan
+
+    req = next(
+        (r for r in _requests if r["id"] == request_id and r.get("kind") == "upgrade"),
+        None,
+    )
+    if req is None:
+        return {
+            "status_code": 404,
+            "path": f"/api/plans/upgrade/{request_id}",
+            "data": None,
+            "message": "Solicitud de upgrade no encontrada.",
+        }
+    if req["status"] != "pendiente":
+        return {
+            "status_code": 409,
+            "path": f"/api/plans/upgrade/{request_id}",
+            "data": req,
+            "message": "Esta solicitud ya fue resuelta.",
+        }
+
+    now = datetime.now()
+    stamp = now.strftime("%d/%m/%Y %H:%M")
+
+    if approved:
+        req["status"] = "aprobada"
+        req["timeline"].append({
+            "type": "resolved",
+            "title": "Upgrade aprobado",
+            "description": "La solicitud fue aprobada por administracion. Se genero la facturacion del nuevo plan y tu plan activo fue actualizado automaticamente.",
+            "author": "Administracion",
+            "datetime": stamp,
+        })
+        start = now.strftime("%d/%m/%Y")
+        end = (now + timedelta(days=365)).strftime("%d/%m/%Y")
+        _active_plan = _build_active_plan(req["to_level"], start, end)
+        message = f"Upgrade #{request_id} aprobado. Tu plan ahora es {req['to_plan']}."
+    else:
+        req["status"] = "rechazada"
+        req["timeline"].append({
+            "type": "rejected",
+            "title": "Upgrade rechazado",
+            "description": "La solicitud fue rechazada por administracion. Tu plan actual se mantiene sin cambios.",
+            "author": "Administracion",
+            "datetime": stamp,
+        })
+        message = f"Upgrade #{request_id} rechazado. Tu plan actual se mantiene."
+
+    req["has_update"] = True
+    req["last_update"] = stamp
+    return {
+        "status_code": 200,
+        "path": f"/api/plans/upgrade/{request_id}",
+        "data": req,
+        "message": message,
     }

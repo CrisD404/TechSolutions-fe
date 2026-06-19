@@ -522,6 +522,23 @@ body {
     color: #6b7280;
 }
 
+.status-badge--approved {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-badge--rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.upgrade-tag {
+    background-color: #eef2ff;
+    color: var(--brand-accent-dark);
+    font-weight: 600;
+    font-size: 0.7rem;
+}
+
 /* Fila clickeable + indicador de actividad reciente */
 .request-row {
     cursor: pointer;
@@ -796,6 +813,119 @@ body {
 .timeline-item__author {
     font-size: 0.78rem;
     color: var(--text-muted);
+}
+
+/* CTA de upgrade en el sidebar del plan */
+.plan-upgrade-btn {
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+.plan-upgrade-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #854d0e;
+    text-decoration: none;
+}
+
+.plan-upgrade-note:hover {
+    text-decoration: underline;
+}
+
+/* ===== Catalogo de planes ===== */
+.catalog-card {
+    border: 1px solid #e5e7eb;
+    border-top: 4px solid var(--brand-accent);
+    border-radius: 0.5rem;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.catalog-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.catalog-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.catalog-card__name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--brand-900);
+}
+
+.catalog-card__price {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--brand-accent);
+    white-space: nowrap;
+}
+
+.catalog-card__tagline {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-bottom: 1.25rem;
+}
+
+/* ===== Upgrade: estado y flujo en el detalle ===== */
+.detail-status--rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.upgrade-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.upgrade-flow__plan {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.upgrade-flow__label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+}
+
+.upgrade-flow__plan--target strong {
+    color: var(--brand-accent);
+}
+
+.upgrade-flow__arrow {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.demo-actions {
+    padding: 0.85rem 1rem;
+    border: 1px dashed #d1d5db;
+    border-radius: 0.5rem;
+    background: #f9fafb;
+}
+
+.demo-actions__note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0 0 0.6rem 0;
 }
 
 /* ===== Responsive dashboard ===== */
