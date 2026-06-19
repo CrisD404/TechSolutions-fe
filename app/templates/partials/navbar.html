@@ -1,0 +1,82 @@
+<nav class="navbar navbar-expand dashboard-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand auth-logo" href="{{ url_for('main.home') }}">
+            <i class="bi bi-hexagon-fill"></i>
+            TechSolutions
+        </a>
+
+        <div class="d-flex align-items-center gap-3">
+            <!-- Notificaciones -->
+            <div class="dropdown">
+                <button
+                    class="btn navbar-icon-btn position-relative"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Notificaciones"
+                >
+                    <i class="bi bi-bell"></i>
+                    {% if unread_notifications > 0 %}
+                        <span class="navbar-badge">{{ unread_notifications }}</span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end navbar-dropdown">
+                    <li><h6 class="dropdown-header">Notificaciones</h6></li>
+                    {% for n in notifications %}
+                        <li>
+                            <div class="dropdown-item navbar-dropdown__item {{ '' if n.read else 'navbar-dropdown__item--unread' }}">
+                                <i class="bi bi-{{ 'info-circle text-primary' if n.type == 'info' else 'check-circle text-success' if n.type == 'success' else 'exclamation-triangle text-warning' }}"></i>
+                                <div>
+                                    <p class="navbar-dropdown__text">{{ n.message }}</p>
+                                    <small class="navbar-dropdown__date">{{ n.date }}</small>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Mensajes -->
+            <div class="dropdown">
+                <button
+                    class="btn navbar-icon-btn position-relative"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Mensajes"
+                >
+                    <i class="bi bi-envelope"></i>
+                    {% if unread_messages > 0 %}
+                        <span class="navbar-badge">{{ unread_messages }}</span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end navbar-dropdown">
+                    <li><h6 class="dropdown-header">Mensajes</h6></li>
+                    {% for m in messages %}
+                        <li>
+                            <div class="dropdown-item navbar-dropdown__item {{ '' if m.read else 'navbar-dropdown__item--unread' }}">
+                                <i class="bi bi-person-circle"></i>
+                                <div>
+                                    <p class="navbar-dropdown__text">
+                                        <strong>{{ m.from }}</strong> &mdash; {{ m.subject }}
+                                    </p>
+                                    <small class="navbar-dropdown__date">{{ m.preview }}</small>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Usuario + Logout -->
+            <div class="d-flex align-items-center gap-2 navbar-user">
+                <span class="navbar-user__name">{{ user.get("name", "Usuario") }}</span>
+                <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-box-arrow-right"></i> Salir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>

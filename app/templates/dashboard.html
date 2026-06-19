@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de control - TechSolutions{% endblock %}
+
+{% block body %}
+{% include "partials/navbar.html" %}
+
+<div class="container-fluid dashboard-content">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success d-flex align-items-center" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1>Panel de control</h1>
+            <p class="dashboard-subtitle">Hola, {{ user.get("name", "usuario") }}. Aca podes ver tus solicitudes y tu plan vigente.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna principal: Solicitudes -->
+        <div class="col-lg-8">
+            <section>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h2 class="dashboard-section-title mb-0">Solicitudes</h2>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+                        <i class="bi bi-plus-lg me-1"></i> Nueva solicitud
+                    </button>
+                </div>
+
+                {% if requests_list %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle requests-table">
+                            <thead>
+                                <tr>
+                                    <th>#ID</th>
+                                    <th>Asunto</th>
+                                    <th>Area</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Consultor</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in requests_list %}
+                                    <tr>
+                                        <td><strong>{{ req.id }}</strong></td>
+                                        <td>{{ req.subject }}</td>
+                                        <td><span class="badge bg-light text-dark">{{ req.area }}</span></td>
+                                        <td>
+                                            {% if req.status == "pendiente" %}
+                                                <span class="badge status-badge--pending">Pendiente</span>
+                                            {% elif req.status == "en_progreso" %}
+                                                <span class="badge status-badge--progress">En progreso</span>
+                                            {% elif req.status == "completada" %}
+                                                <span class="badge status-badge--done">Completada</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if req.priority == "alta" %}
+                                                <span class="badge priority-badge--high">Alta</span>
+                                            {% elif req.priority == "media" %}
+                                                <span class="badge priority-badge--medium">Media</span>
+                                            {% elif req.priority == "baja" %}
+                                                <span class="badge priority-badge--low">Baja</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ req.assigned_to or "Sin asignar" }}</td>
+                                        <td>{{ req.created }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox" style="font-size: 2.5rem;"></i>
+                        <p class="mt-2">No hay solicitudes registradas.</p>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+
+        <!-- Sidebar: Plan vigente -->
+        <div class="col-lg-4">
+            <div class="card plan-summary">
+                <div class="card-body">
+                    <div class="plan-summary__top">
+                        <span class="plan-summary__label">Plan actual</span>
+                        <span class="badge plan-badge--active">Activo</span>
+                    </div>
+                    <h3 class="plan-summary__name">{{ active_plan.name }}</h3>
+                    <div class="plan-summary__exp">
+                        <i class="bi bi-calendar3"></i> Vence el {{ active_plan.end_date }}
+                    </div>
+
+                    <button
+                        class="btn btn-outline-primary btn-sm w-100"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#planDetail"
+                        aria-expanded="false"
+                        aria-controls="planDetail"
+                    >
+                        Ver detalle
+                    </button>
+
+                    <div class="collapse plan-summary__detail" id="planDetail">
+                        <ul class="plan-services">
+                            {% for service in active_plan.services %}
+                                <li>
+                                    <i class="bi bi-check-lg"></i>
+                                    <div>
+                                        <strong>{{ service.name }}</strong>
+                                        <span class="plan-services__desc">{{ service.description }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="plan-card__dates">
+                            <i class="bi bi-calendar3"></i>
+                            Vigencia: {{ active_plan.start_date }} &mdash; {{ active_plan.end_date }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if plan_history %}
+                <a
+                    class="plan-history-link"
+                    data-bs-toggle="collapse"
+                    href="#planHistory"
+                    role="button"
+                    aria-expanded="false"
+                    aria-controls="planHistory"
+                >
+                    <i class="bi bi-clock-history"></i> Ver historial de planes
+                </a>
+                <div class="collapse" id="planHistory">
+                    {% for plan in plan_history %}
+                        <div class="plan-history-item">
+                            <div>
+                                <strong>{{ plan.name }}</strong>
+                                <div class="plan-history-item__dates">{{ plan.start_date }} &mdash; {{ plan.end_date }}</div>
+                            </div>
+                            <span class="badge plan-badge--expired">Finalizado</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Solicitud -->
+<div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newRequestModalLabel">Nueva solicitud</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="post" action="{{ url_for('main.new_request') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Asunto</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="area" class="form-label">Area</label>
+                        <select class="form-select" id="area" name="area" required>
+                            <option value="" disabled selected>Selecciona un area</option>
+                            {% for area in areas %}
+                                <option value="{{ area }}">{{ area }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripcion</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i> Enviar solicitud
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
