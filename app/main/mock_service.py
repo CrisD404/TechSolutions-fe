@@ -1,3 +1,5 @@
+from datetime import datetime
+
 REQUEST_AREAS = [
     "Soporte IT",
     "Cloud",
@@ -8,8 +10,6 @@ REQUEST_AREAS = [
     "Infraestructura",
     "Capacitacion",
 ]
-
-_requests_store = []
 
 
 def get_active_plan():
@@ -83,85 +83,193 @@ def get_messages():
     }
 
 
-def get_notifications():
-    return {
-        "status_code": 200,
-        "path": "/api/notifications",
-        "data": [
-            {
-                "id": 1,
-                "type": "info",
-                "message": "Tu solicitud #1042 fue asignada a un consultor",
-                "date": "19/06/2026",
-                "read": False,
-            },
-            {
-                "id": 2,
-                "type": "success",
-                "message": "Backup completado exitosamente",
-                "date": "19/06/2026",
-                "read": False,
-            },
-            {
-                "id": 3,
-                "type": "warning",
-                "message": "Tu plan Starter vence en 30 dias",
-                "date": "18/06/2026",
-                "read": True,
-            },
-        ],
-    }
-
-
-_REQUESTS_BASE = [
+# ===== Solicitudes =====
+# Almacen in-memory: cada solicitud persiste su timeline de eventos (NotiSys).
+# Tipos de evento: created | modified | comment | status_change | resolved
+_requests = [
     {
         "id": 1042,
         "subject": "Migracion base de datos a AWS",
         "area": "Cloud",
+        "description": "Necesitamos migrar la base de datos productiva a AWS RDS minimizando el downtime.",
         "status": "en_progreso",
         "priority": "alta",
         "created": "10/06/2026",
         "assigned_to": "Carlos Mendez",
+        "has_update": True,
+        "last_update": "19/06/2026 09:00",
+        "timeline": [
+            {
+                "type": "created",
+                "title": "Solicitud creada",
+                "description": "El cliente registro la solicitud.",
+                "author": "Vos",
+                "datetime": "10/06/2026 09:15",
+            },
+            {
+                "type": "modified",
+                "title": "Solicitud aprobada y asignada",
+                "description": "La solicitud fue aprobada y asignada a Carlos Mendez.",
+                "author": "TechSolutions",
+                "datetime": "11/06/2026 10:00",
+            },
+            {
+                "type": "comment",
+                "title": "Respuesta del consultor",
+                "description": "Iniciamos el relevamiento de la base actual y su volumen de datos.",
+                "author": "Carlos Mendez",
+                "datetime": "12/06/2026 16:30",
+            },
+            {
+                "type": "status_change",
+                "title": "Cambio de estado",
+                "description": "Estado actualizado de Pendiente a En progreso.",
+                "author": "Carlos Mendez",
+                "datetime": "14/06/2026 11:00",
+            },
+            {
+                "type": "comment",
+                "title": "Respuesta del consultor",
+                "description": "Avance: configuramos el entorno destino en AWS RDS y validamos la conectividad.",
+                "author": "Carlos Mendez",
+                "datetime": "19/06/2026 09:00",
+            },
+        ],
     },
     {
         "id": 1038,
         "subject": "Configuracion VPN corporativa",
         "area": "Redes",
+        "description": "Solicitamos configurar acceso VPN para el equipo remoto.",
         "status": "pendiente",
         "priority": "media",
         "created": "05/06/2026",
         "assigned_to": None,
+        "has_update": False,
+        "last_update": "06/06/2026 09:30",
+        "timeline": [
+            {
+                "type": "created",
+                "title": "Solicitud creada",
+                "description": "El cliente registro la solicitud.",
+                "author": "Vos",
+                "datetime": "05/06/2026 14:20",
+            },
+            {
+                "type": "comment",
+                "title": "Respuesta del consultor",
+                "description": "Recibimos tu solicitud, sera asignada a un consultor en breve.",
+                "author": "Soporte TechSolutions",
+                "datetime": "06/06/2026 09:30",
+            },
+        ],
     },
     {
         "id": 1035,
         "subject": "Auditoria de seguridad web",
         "area": "Seguridad",
+        "description": "Auditoria de seguridad sobre el portal de clientes.",
         "status": "completada",
         "priority": "alta",
         "created": "28/05/2026",
         "assigned_to": "Laura Gomez",
+        "has_update": False,
+        "last_update": "04/06/2026 17:30",
+        "timeline": [
+            {
+                "type": "created",
+                "title": "Solicitud creada",
+                "description": "El cliente registro la solicitud.",
+                "author": "Vos",
+                "datetime": "28/05/2026 08:45",
+            },
+            {
+                "type": "modified",
+                "title": "Solicitud aprobada y asignada",
+                "description": "La solicitud fue aprobada y asignada a Laura Gomez.",
+                "author": "TechSolutions",
+                "datetime": "29/05/2026 10:00",
+            },
+            {
+                "type": "status_change",
+                "title": "Cambio de estado",
+                "description": "Estado actualizado de Pendiente a En progreso.",
+                "author": "Laura Gomez",
+                "datetime": "30/05/2026 15:00",
+            },
+            {
+                "type": "comment",
+                "title": "Respuesta del consultor",
+                "description": "Detectamos 3 vulnerabilidades medias, adjuntamos el informe con recomendaciones.",
+                "author": "Laura Gomez",
+                "datetime": "02/06/2026 12:00",
+            },
+            {
+                "type": "resolved",
+                "title": "Solicitud resuelta",
+                "description": "Auditoria finalizada y reporte entregado. Solicitud cerrada.",
+                "author": "Laura Gomez",
+                "datetime": "04/06/2026 17:30",
+            },
+        ],
     },
 ]
-
-
-def get_requests():
-    return {
-        "status_code": 200,
-        "path": "/api/requests",
-        "data": _REQUESTS_BASE,
-    }
 
 
 def get_all_requests():
     return {
         "status_code": 200,
         "path": "/api/requests",
-        "data": _requests_store + _REQUESTS_BASE,
+        "data": _requests,
     }
 
 
+def get_request(request_id):
+    request = next((r for r in _requests if r["id"] == request_id), None)
+    if request is None:
+        return {"status_code": 404, "path": f"/api/requests/{request_id}", "data": None}
+    return {"status_code": 200, "path": f"/api/requests/{request_id}", "data": request}
+
+
+def mark_request_seen(request_id):
+    request = next((r for r in _requests if r["id"] == request_id), None)
+    if request is not None:
+        request["has_update"] = False
+    return request
+
+
+def get_notifications():
+    # Las notificaciones de actividad se derivan de las solicitudes con
+    # actualizaciones no vistas, conectando la tabla con el icono del header.
+    data = []
+    for req in _requests:
+        if req["has_update"]:
+            last_event = req["timeline"][-1]
+            data.append({
+                "id": f"req-{req['id']}",
+                "type": "info",
+                "message": f"Solicitud #{req['id']}: {last_event['title'].lower()}",
+                "date": req["last_update"],
+                "read": False,
+                "request_id": req["id"],
+            })
+
+    # Notificacion general del sistema (no asociada a una solicitud).
+    data.append({
+        "id": "sys-plan",
+        "type": "warning",
+        "message": "Tu plan vence el 28/02/2027",
+        "date": "18/06/2026",
+        "read": True,
+        "request_id": None,
+    })
+
+    return {"status_code": 200, "path": "/api/notifications", "data": data}
+
+
 def create_request(subject, description, area):
-    new_id = 1050 + len(_requests_store)
+    new_id = 1043 + len(_requests)
+    now = datetime.now().strftime("%H:%M")
     new_request = {
         "id": new_id,
         "subject": subject,
@@ -171,8 +279,19 @@ def create_request(subject, description, area):
         "priority": "media",
         "created": "19/06/2026",
         "assigned_to": None,
+        "has_update": True,
+        "last_update": f"19/06/2026 {now}",
+        "timeline": [
+            {
+                "type": "created",
+                "title": "Solicitud creada",
+                "description": "El cliente registro la solicitud. Pendiente de asignacion.",
+                "author": "Vos",
+                "datetime": f"19/06/2026 {now}",
+            },
+        ],
     }
-    _requests_store.append(new_request)
+    _requests.insert(0, new_request)
     return {
         "status_code": 201,
         "path": "/api/requests",

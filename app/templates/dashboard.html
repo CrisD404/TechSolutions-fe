@@ -52,9 +52,15 @@
                             </thead>
                             <tbody>
                                 {% for req in requests_list %}
-                                    <tr>
+                                    <tr class="request-row {{ 'request-row--unseen' if req.has_update }}"
+                                        data-href="{{ url_for('main.request_detail', request_id=req.id) }}">
                                         <td><strong>{{ req.id }}</strong></td>
-                                        <td>{{ req.subject }}</td>
+                                        <td>
+                                            {{ req.subject }}
+                                            {% if req.has_update %}
+                                                <span class="badge update-badge ms-1">Nuevo</span>
+                                            {% endif %}
+                                        </td>
                                         <td><span class="badge bg-light text-dark">{{ req.area }}</span></td>
                                         <td>
                                             {% if req.status == "pendiente" %}
@@ -199,4 +205,15 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filas de solicitudes clickeables: abren el detalle de la solicitud.
+    document.querySelectorAll(".request-row").forEach(function (row) {
+        row.addEventListener("click", function () {
+            window.location = row.dataset.href;
+        });
+    });
+</script>
 {% endblock %}

@@ -24,13 +24,25 @@
                     <li><h6 class="dropdown-header">Notificaciones</h6></li>
                     {% for n in notifications %}
                         <li>
-                            <div class="dropdown-item navbar-dropdown__item {{ '' if n.read else 'navbar-dropdown__item--unread' }}">
-                                <i class="bi bi-{{ 'info-circle text-primary' if n.type == 'info' else 'check-circle text-success' if n.type == 'success' else 'exclamation-triangle text-warning' }}"></i>
-                                <div>
-                                    <p class="navbar-dropdown__text">{{ n.message }}</p>
-                                    <small class="navbar-dropdown__date">{{ n.date }}</small>
+                            {% set icon = 'info-circle text-primary' if n.type == 'info' else 'check-circle text-success' if n.type == 'success' else 'exclamation-triangle text-warning' %}
+                            {% if n.request_id %}
+                                <a href="{{ url_for('main.request_detail', request_id=n.request_id) }}"
+                                   class="dropdown-item navbar-dropdown__item {{ '' if n.read else 'navbar-dropdown__item--unread' }}">
+                                    <i class="bi bi-{{ icon }}"></i>
+                                    <div>
+                                        <p class="navbar-dropdown__text">{{ n.message }}</p>
+                                        <small class="navbar-dropdown__date">{{ n.date }}</small>
+                                    </div>
+                                </a>
+                            {% else %}
+                                <div class="dropdown-item navbar-dropdown__item {{ '' if n.read else 'navbar-dropdown__item--unread' }}">
+                                    <i class="bi bi-{{ icon }}"></i>
+                                    <div>
+                                        <p class="navbar-dropdown__text">{{ n.message }}</p>
+                                        <small class="navbar-dropdown__date">{{ n.date }}</small>
+                                    </div>
                                 </div>
-                            </div>
+                            {% endif %}
                         </li>
                     {% endfor %}
                 </ul>

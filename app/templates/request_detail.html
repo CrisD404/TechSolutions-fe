@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitud #{{ request_item.id }} - TechSolutions{% endblock %}
+
+{% block body %}
+{% include "partials/navbar.html" %}
+
+{# Iconos por tipo de evento del timeline (eventos NotiSys) #}
+{% set event_icons = {
+    "created": "plus-circle",
+    "modified": "pencil-square",
+    "comment": "chat-left-text",
+    "status_change": "arrow-repeat",
+    "resolved": "check-circle-fill"
+} %}
+
+{# Progreso de la solicitud: pasos completados segun el estado #}
+{% set completed = 1 if request_item.status == "pendiente" else 2 if request_item.status == "en_progreso" else 3 %}
+{% set steps = [
+    {"n": 1, "label": "Creada", "icon": "plus-circle"},
+    {"n": 2, "label": "En progreso", "icon": "arrow-repeat"},
+    {"n": 3, "label": "Resuelta", "icon": "check-circle"}
+] %}
+
+<div class="container-fluid dashboard-content detail-content">
+    <a href="{{ url_for('main.home') }}" class="detail-back">
+        <i class="bi bi-arrow-left"></i> Volver al panel
+    </a>
+
+    <div class="detail-header">
+        <span class="detail-header__id">Solicitud #{{ request_item.id }}</span>
+        <h1>{{ request_item.subject }}</h1>
+        <p class="detail-header__desc">{{ request_item.description }}</p>
+        <div class="detail-meta">
+            <span><i class="bi bi-tag"></i> {{ request_item.area }}</span>
+            <span>
+                <i class="bi bi-flag"></i>
+                Prioridad:
+                {% if request_item.priority == "alta" %}
+                    <span class="badge priority-badge--high">Alta</span>
+                {% elif request_item.priority == "media" %}
+                    <span class="badge priority-badge--medium">Media</span>
+                {% else %}
+                    <span class="badge priority-badge--low">Baja</span>
+                {% endif %}
+            </span>
+            <span><i class="bi bi-person-badge"></i> {{ request_item.assigned_to or "Sin asignar" }}</span>
+            <span><i class="bi bi-calendar3"></i> Creada el {{ request_item.created }}</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Estado de la solicitud -->
+        <div class="col-lg-4">
+            {% if request_item.status == "completada" %}
+                <div class="detail-status detail-status--done">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <span class="detail-status__label">Realizado</span>
+                        <span class="detail-status__hint">Esta solicitud fue resuelta.</span>
+                    </div>
+                </div>
+            {% elif request_item.status == "en_progreso" %}
+                <div class="detail-status detail-status--progress">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <div>
+                        <span class="detail-status__label">En progreso</span>
+                        <span class="detail-status__hint">La consultora esta trabajando en esto.</span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="detail-status detail-status--pending">
+                    <i class="bi bi-hourglass-split"></i>
+                    <div>
+                        <span class="detail-status__label">Pendiente</span>
+                        <span class="detail-status__hint">A la espera de asignacion.</span>
+                    </div>
+                </div>
+            {% endif %}
+
+            <ol class="detail-stepper">
+                {% for step in steps %}
+                    {% if step.n <= completed %}
+                        {% set state = "is-done" %}
+                    {% elif step.n == completed + 1 and request_item.status != "completada" %}
+                        {% set state = "is-active" %}
+                    {% else %}
+                        {% set state = "is-pending" %}
+                    {% endif %}
+                    <li class="detail-step {{ state }}">
+                        <span class="detail-step__circle"><i class="bi bi-{{ step.icon }}"></i></span>
+                        <span class="detail-step__label">{{ step.label }}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- Timeline de eventos -->
+        <div class="col-lg-8">
+            <h2 class="dashboard-section-title">Historial de la solicitud</h2>
+            <ul class="timeline">
+                {% for event in request_item.timeline %}
+                    <li class="timeline-item timeline-item--{{ event.type }}">
+                        <span class="timeline-item__dot">
+                            <i class="bi bi-{{ event_icons.get(event.type, 'dot') }}"></i>
+                        </span>
+                        <div class="timeline-item__body">
+                            <div class="timeline-item__head">
+                                <span class="timeline-item__title">{{ event.title }}</span>
+                                <span class="timeline-item__date">{{ event.datetime }}</span>
+                            </div>
+                            <p class="timeline-item__desc">{{ event.description }}</p>
+                            <span class="timeline-item__author">
+                                <i class="bi bi-person"></i> {{ event.author }}
+                            </span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
