@@ -47,6 +47,9 @@
             </span>
             <span><i class="bi bi-person-badge"></i> {{ request_item.assigned_to or "Sin asignar" }}</span>
             <span><i class="bi bi-calendar3"></i> Creada el {{ request_item.created }}</span>
+            {% if request_item.attachments %}
+                <span><i class="bi bi-paperclip"></i> {{ request_item.attachments | join(", ") }}</span>
+            {% endif %}
         </div>
     </div>
 

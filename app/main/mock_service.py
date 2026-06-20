@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 
 REQUEST_AREAS = [
-    "Soporte IT",
-    "Cloud",
-    "Seguridad",
-    "Redes",
-    "Consultoria",
-    "Desarrollo",
-    "Infraestructura",
-    "Capacitacion",
+    "Finanzas y Contabilidad",
+    "Marketing Digital",
+    "Recursos Humanos y Talento",
+    "Desarrollo Web y UX/UI",
+    "Logistica y Cadena de Suministro",
+    "Inteligencia Artificial y Machine Learning",
+    "Gestion de Proyectos Agile",
+    "Cumplimiento Legal y Normativo",
 ]
 
 
@@ -330,7 +330,7 @@ def get_notifications():
     return {"status_code": 200, "path": "/api/notifications", "data": data}
 
 
-def create_request(subject, description, area):
+def create_request(subject, description, area, attachments=None):
     new_id = _next_request_id()
     now = datetime.now().strftime("%H:%M")
     new_request = {
@@ -339,6 +339,7 @@ def create_request(subject, description, area):
         "subject": subject,
         "area": area,
         "description": description,
+        "attachments": attachments or [],
         "status": "pendiente",
         "priority": "media",
         "created": "19/06/2026",

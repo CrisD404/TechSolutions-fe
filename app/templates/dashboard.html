@@ -192,7 +192,7 @@
                 <h5 class="modal-title" id="newRequestModalLabel">Nueva solicitud</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form method="post" action="{{ url_for('main.new_request') }}">
+            <form method="post" action="{{ url_for('main.new_request') }}" enctype="multipart/form-data">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="subject" class="form-label">Asunto</label>
@@ -210,6 +210,21 @@
                     <div class="mb-3">
                         <label for="description" class="form-label">Descripcion</label>
                         <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="attachments" class="form-label">
+                            Adjuntos <span class="text-muted">(opcional)</span>
+                        </label>
+                        <input
+                            type="file"
+                            class="form-control"
+                            id="attachments"
+                            name="attachments"
+                            multiple
+                            accept=".pdf,.jpg,.jpeg,.png,.docx"
+                        >
+                        <div class="form-text">Formatos permitidos: PDF, JPG, PNG, DOCX. Maximo 10MB por archivo.</div>
+                        <div id="attachments-feedback" class="invalid-feedback"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -232,5 +247,32 @@
             window.location = row.dataset.href;
         });
     });
+
+    // Validacion de adjuntos (tipo y tamano) antes de enviar la solicitud.
+    var attachmentsInput = document.getElementById("attachments");
+    if (attachmentsInput) {
+        var allowedExt = ["pdf", "jpg", "jpeg", "png", "docx"];
+        var maxSize = 10 * 1024 * 1024; // 10MB
+        var feedback = document.getElementById("attachments-feedback");
+
+        attachmentsInput.addEventListener("change", function () {
+            var error = "";
+            for (var i = 0; i < this.files.length; i++) {
+                var file = this.files[i];
+                var ext = file.name.split(".").pop().toLowerCase();
+                if (allowedExt.indexOf(ext) === -1) {
+                    error = "Formato no permitido: " + file.name;
+                    break;
+                }
+                if (file.size > maxSize) {
+                    error = "El archivo supera los 10MB: " + file.name;
+                    break;
+                }
+            }
+            this.setCustomValidity(error);
+            feedback.textContent = error;
+            this.classList.toggle("is-invalid", error !== "");
+        });
+    }
 </script>
 {% endblock %}

@@ -1,6 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.auth.decorators import login_required
+from app.main.validators import validate_attachments
 from app.main.mock_service import (
     REQUEST_AREAS,
     create_request,
@@ -64,7 +65,14 @@ def new_request():
         flash("Todos los campos son obligatorios.")
         return redirect(url_for("main.home"))
 
-    response = create_request(subject, description, area)
+    attachments = request.files.getlist("attachments")
+    ok, error = validate_attachments(attachments)
+    if not ok:
+        flash(error)
+        return redirect(url_for("main.home"))
+
+    attachment_names = [f.filename for f in attachments if f and f.filename]
+    response = create_request(subject, description, area, attachment_names)
     flash(response["message"])
     return redirect(url_for("main.home"))
 
